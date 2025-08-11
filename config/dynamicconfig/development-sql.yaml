@@ -1,0 +1,9 @@
+sql:
+  pluginName: "postgresql"
+  hosts:
+    - "postgresql"   # This matches your Docker service name 'postgresql'
+  port: 5432
+  user: "temporal"    # matches POSTGRES_USER in your Docker Compose
+  password: "temporal"  # matches POSTGRES_PASSWORD in your Docker Compose
+  database: "temporal"  # matches POSTGRES_DB in your Docker Compose
+  sslMode: "disable"

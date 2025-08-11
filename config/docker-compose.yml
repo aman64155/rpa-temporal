@@ -1,0 +1,79 @@
+services:
+  # Temporal dependencies (PostgreSQL)
+  postgresql:
+    image: postgres:13
+    environment:
+      POSTGRES_PASSWORD: temporal
+      POSTGRES_USER: temporal
+      POSTGRES_DB: temporal
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgresql-data:/var/lib/postgresql/data
+    networks:
+      - temporal-network
+
+  # Temporal server with auto-setup
+  temporal:
+    image: temporalio/auto-setup:1.22.4
+    depends_on:
+      - postgresql
+    environment:
+      - DB=postgresql
+      - DB_PORT=5432
+      - POSTGRES_USER=temporal
+      - POSTGRES_PWD=temporal
+      - POSTGRES_SEEDS=postgresql
+      - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development-sql.yaml
+    ports:
+      - "7233:7233"
+    networks:
+      - temporal-network
+
+  # Temporal Web UI
+  temporal-web:
+    image: temporalio/web:latest
+    depends_on:
+      - temporal
+    environment:
+      - TEMPORAL_GRPC_ENDPOINT=temporal:7233
+      - TEMPORAL_WEB_PORT=8080
+    ports:
+      - "8080:8080"
+    networks:
+      - temporal-network
+
+  # RPA API Server
+  rpa-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    ports:
+      - "3001:3000"
+    environment:
+      - NODE_ENV=development
+    depends_on:
+      - temporal
+    networks:
+      - temporal-network
+    restart: unless-stopped
+
+  # RPA Worker
+  rpa-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    environment:
+      - NODE_ENV=development
+    depends_on:
+      - temporal
+    networks:
+      - temporal-network
+    restart: unless-stopped
+
+volumes:
+  postgresql-data:
+
+networks:
+  temporal-network:
+    driver: bridge
