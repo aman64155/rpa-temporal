@@ -18,13 +18,16 @@ services:
     image: temporalio/auto-setup:1.22.4
     depends_on:
       - postgresql
+    volumes:
+      # This path is relative to the docker-compose.yml file, which is correct.
+      - ./dynamicconfig/development-sql.yaml:/etc/temporal/dynamic_config.yaml
     environment:
       - DB=postgresql
       - DB_PORT=5432
       - POSTGRES_USER=temporal
       - POSTGRES_PWD=temporal
       - POSTGRES_SEEDS=postgresql
-      - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development-sql.yaml
+      - DYNAMIC_CONFIG_FILE_PATH=/etc/temporal/dynamic_config.yaml
     ports:
       - "7233:7233"
     networks:
@@ -47,6 +50,7 @@ services:
   rpa-api:
     build:
       context: .
+      # --- FIX: Path is now relative to the docker-compose.yml file ---
       dockerfile: Dockerfile.api
     ports:
       - "3001:3000"
@@ -62,6 +66,7 @@ services:
   rpa-worker:
     build:
       context: .
+      # --- FIX: Path is now relative to the docker-compose.yml file ---
       dockerfile: Dockerfile.worker
     environment:
       - NODE_ENV=development
